@@ -1,0 +1,23 @@
+# Windsurf Workflow for CodeForce Solutions
+# This workflow ensures that every Codeforces solution is executed with pypy3.10
+# and all accompanying tests are run immediately.
+
+version: 1
+pypy_executable: "/opt/homebrew/bin/pypy3.10"
+
+# Command template to run tests.
+# You can customize the test discovery pattern as needed.
+default_test_command: "${{workflow.pypy_executable}} -m unittest discover -s . -p 'test_*.py' -v"
+
+# Hooks define what happens when certain events occur in the repository.
+hooks:
+  # Whenever a Python file is saved or modified in the CodeForce directory,
+  # the tests will be automatically executed with pypy3.10.
+  - event: on_save
+    patterns:
+      - "**/*.py"
+    commands:
+      - name: Run CodeForce tests with PyPy3.10
+        run: |
+          echo "Running tests with pypy3.10..."
+          ${{workflow.default_test_command}}
