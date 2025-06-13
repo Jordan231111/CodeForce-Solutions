@@ -1,100 +1,160 @@
-#!/usr/bin/env pypy3.10
+#!/usr/bin/env pypy3
 """
 Codeforces 1980C - Cool Partition
-METHOD: Forward Greedy Strategy
+METHOD: Ultra-Optimized Forward Greedy
 
 ALGORITHM:
-The problem requires partitioning an array `a` into contiguous subarrays
-`b_1, b_2, ..., b_k` such that for any `j`, `set(b_j)` is a subset
-of `set(b_{j+1})`. We want to maximize `k`.
-
-A greedy approach from left-to-right is effective. To maximize the
-number of segments, each segment should be as short as possible.
-
-1. Initialize segment count to 0. The `required_elements` for the
-   first segment is an empty set, as it has no predecessor.
-2. Loop through the array, starting a new segment at each step.
-   - Increment segment count.
-   - The goal is to find the shortest possible current segment that
-     fulfills the subset condition.
-   - We iterate from the start of the current segment, adding elements
-     to `current_set` until `required_elements.issubset(current_set)`.
-   - Once the condition is met, we have found the shortest valid
-     segment. We break the inner loop.
-   - If we reach the end of the array and the condition is never met,
-     the last segment is invalid. We must merge it with the previous
-     one, which means the last increment to `count` was erroneous.
-   - The `current_set` becomes the `required_elements` for the next
-     iteration.
-
-This process correctly finds the maximum number of segments.
+Same greedy approach but with minimal overhead and optimized data structures.
+Uses integer sets represented as presence arrays for very fast lookups.
 """
-import sys
 
 def solve_case(n, arr):
-    """Solves a single test case using the forward greedy strategy."""
+    """Optimized greedy solution using reusable presence arrays with lazy clearing."""
+    if n == 0:
+        return 0
+
+    # Determine the compact range of values for array-based indexing
+    min_val = min(arr)
+    max_val = max(arr)
+    range_size = max_val - min_val + 1
+
+    # If the value range is too large, switch to the set-based fallback
+    if range_size > 200_000:
+        return solve_case_with_sets(n, arr)
+
+    segments = 0
+    current_pos = 0
+
+    # Boolean presence arrays (offset by min_val) — allocated once and reused
+    required = [False] * range_size          # values required in next segment
+    required_list = []                       # list of indices currently marked in `required`
+    required_count = 0                       # len(required_list)
+
+    in_current = [False] * range_size        # values seen in the current segment (lazy cleared)
+    found = [False] * range_size             # values from `required` already satisfied (lazy cleared)
+
+    while current_pos < n:
+        segments += 1
+
+        remaining = required_count           # how many required values still to satisfy
+        found_indices = []                   # indices set in `found` — to clear afterwards
+        current_indices = []                 # indices appearing in this segment — becomes new `required`
+        valid_segment = False
+
+        for i in range(current_pos, n):
+            val_offset = arr[i] - min_val
+
+            # Register value in current segment (avoid duplicates)
+            if not in_current[val_offset]:
+                in_current[val_offset] = True
+                current_indices.append(val_offset)
+
+            # Does it satisfy a pending requirement?
+            if required[val_offset] and not found[val_offset]:
+                found[val_offset] = True
+                found_indices.append(val_offset)
+                remaining -= 1
+
+            # All requirements satisfied — segment ends here
+            if remaining == 0:
+                valid_segment = True
+                current_pos = i + 1
+                break
+
+        if not valid_segment:
+            # Ran out of elements before fulfilling requirements — discard last increment
+            segments -= 1
+            break
+
+        # ---------- House-keeping for next iteration ----------
+
+        # 1) Clear `found` flags that were set this segment
+        for idx in found_indices:
+            found[idx] = False
+
+        # 2) Unmark previous `required` flags
+        for idx in required_list:
+            required[idx] = False
+
+        # 3) Promote current segment's set to the new `required`
+        for idx in current_indices:
+            required[idx] = True      # mark as required for next segment
+            in_current[idx] = False   # clear `in_current` for reuse
+
+        required_list = current_indices
+        required_count = len(required_list)
+
+    return segments
+
+
+def solve_case_with_sets(n, arr):
+    """Fallback for when value range is too large."""
     if n == 0:
         return 0
     
     segments = 0
     current_pos = 0
-    required_elements = set()
-
+    required_set = set()
+    
     while current_pos < n:
         segments += 1
         
-        # Find the end of the current, valid segment
-        end_of_segment = current_pos
+        # Make a copy of required elements
+        needed = required_set.copy()
         current_set = set()
-        found_valid_segment = False
+        valid_segment = False
         
-        while end_of_segment < n:
-            current_set.add(arr[end_of_segment])
-            if required_elements.issubset(current_set):
-                # This is the shortest possible valid segment
-                found_valid_segment = True
-                break
-            end_of_segment += 1
+        for i in range(current_pos, n):
+            current_set.add(arr[i])
+            needed.discard(arr[i])
             
-        if not found_valid_segment:
-            # Reached the end of the array without satisfying the condition.
-            # The last segment is not valid, so it must be merged with
-            # the previous one. The last increment to segments was incorrect.
+            if not needed:
+                valid_segment = True
+                current_pos = i + 1
+                break
+        
+        if not valid_segment:
             segments -= 1
             break
-            
-        # Prepare for the next segment
-        required_elements = current_set
-        current_pos = end_of_segment + 1
         
+        required_set = current_set
+    
     return segments
 
+
 def main():
-    """Driver for all test cases."""
-    try:
-        data = sys.stdin.read().split()
-        if not data:
-            return
-            
-        test_cases = int(data[0])
-        current_idx = 1
+    """Optimized input reading and processing."""
+    import sys
+    
+    # Read all input at once
+    input_data = sys.stdin.read().strip()
+    tokens = input_data.split()
+    
+    test_cases = int(tokens[0])
+    pos = 1
+    
+    results = []
+    
+    for _ in range(test_cases):
+        n = int(tokens[pos])
+        pos += 1
         
-        output_lines = []
-        for _ in range(test_cases):
-            if current_idx >= len(data): break
-            n = int(data[current_idx])
-            current_idx += 1
-            if current_idx + n > len(data): break
-            arr = [int(x) for x in data[current_idx:current_idx + n]]
-            current_idx += n
-            
-            result = solve_case(n, arr)
-            output_lines.append(str(result))
-            
-        print("\n".join(output_lines))
-    except (IOError, IndexError, ValueError):
-        # Handles empty or malformed input.
-        return
+        if n == 0:
+            results.append(0)
+            continue
+        
+        # Read array directly without intermediate list
+        arr = []
+        for i in range(n):
+            arr.append(int(tokens[pos + i]))
+        pos += n
+        
+        result = solve_case(n, arr)
+        results.append(result)
+    
+    # Output all results at once
+    print('\n'.join(map(str, results)))
+
 
 if __name__ == "__main__":
-    main() 
+    main()
