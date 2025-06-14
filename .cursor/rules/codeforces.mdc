@@ -21,10 +21,29 @@ For **every Codeforces problem**, follow these instructions
 - Use descriptive variable names (no single letters except loop counters)
 - Optimize critical sections (inner loops, repeated operations)
 - Follow template-driven approach for faster implementation
+- Prefer **single-pass scans with early exit** whenever possible
+- Minimise temporary Python objects (e.g. stream integers from
+  `stdin.buffer.read().split()` directly; avoid building throw-away lists)
+
+## 3a. PyPy-specific Performance Hints
+- Each additional pass over an `n = 2·10⁵` array costs ≈40–60 ms in
+  PyPy's interpreter **before** JIT kicks in.  If the algorithm can
+  succeed in one backwards/forwards scan, do so.
+- Hash-table probes dominate: two `set.__contains__` per element is fine;
+  eight per element risks TLE.  Merge look-ups when possible.
+- The JIT warms up per function.  A tight loop in a helper that's called
+  once per test case will never be JIT-compiled if the case is small.
+  Keep the hot loop in the main function for large-`n` problems.
 
 ## 4. Algorithm Documentation
 - Briefly explain the algorithm and prove its correctness in ≤ 5 sentences
 - **Must include:** Why this approach works and why alternatives won't
+
+## 4a. Fast-Fail Checklist (add to every solution write-up)
+  1. Is there any pass over the input that can be fused with another?
+  2. Can membership tests be merged into one `set` instead of two?
+  3. Is there an early return once the answer is known?
+  4. Does the I/O layer avoid building large intermediate lists?
 
 ## 5. Complexity Analysis & Validation
 - **Time Complexity:** O(?) with brief justification
