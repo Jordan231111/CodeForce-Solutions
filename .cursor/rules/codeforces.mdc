@@ -16,9 +16,11 @@ For **every Codeforces problem**, follow these instructions
 - The working directory is always assumed to be the [CodeForce](mdc:cci:7:/file:/Users/jordan/Documents/CodeForce:0:0-0:0) directory
 - **AUTOMATION REQUIRED:** Use Competitive Companion + parsing scripts for automatic test case download
 - Solutions must be optimized for PyPy's JIT compiler
+- **Never use web search unless the user explicitly requests it in their message.**
+- **Never use `sys.setrecursionlimit` (e.g., `sys.setrecursionlimit(1 << 25)`)** as it will guarantee memory limit exceeded on Codeforces.
 
 ## 3. Code Quality Standards
-- Use descriptive variable names (no single letters except loop counters)
+- Use concise, human-like variable names (e.g., n, m, a, b, res, ans, etc.) for speed, as is common in competitive programming
 - Optimize critical sections (inner loops, repeated operations)
 - Follow template-driven approach for faster implementation
 - Prefer **single-pass scans with early exit** whenever possible
