@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
-For **every Codeforces problem**, follow these instructions
+For **every problem**, follow these instructions
 
 ## 1. Problem-Solving Methodology (CRITICAL FIRST STEP)
 - **Pattern Recognition:** Identify which standard technique/algorithm this problem requires
@@ -12,8 +12,8 @@ For **every Codeforces problem**, follow these instructions
 - **Complexity Estimation:** Estimate time/space complexity before implementation
 
 ## 2. Environment & Automation Setup
-- All Codeforces solutions should be written in **PyPy**, using the **`pypy3.10`** executable
-- The working directory is always assumed to be the [CodeForce](mdc:cci:7:/file:/Users/jordan/Documents/CodeForce:0:0-0:0) directory
+- All Codeforces solutions must be written in Python using the **`pypy3.10`** executable and must leverage the predefined snippet templates [python.json](mdc:python.json) to scaffold algorithms quickly.
+- All files must reside directly inside the top-level `CodeForce/` directory (no subfolders or duplicate directories).
 - **AUTOMATION REQUIRED:** Use Competitive Companion + parsing scripts for automatic test case download
 - Solutions must be optimized for PyPy's JIT compiler
 - **Never use web search unless the user explicitly requests it in their message.**
@@ -24,18 +24,13 @@ For **every Codeforces problem**, follow these instructions
 - Optimize critical sections (inner loops, repeated operations)
 - Follow template-driven approach for faster implementation
 - Prefer **single-pass scans with early exit** whenever possible
-- Minimise temporary Python objects (e.g. stream integers from
-  `stdin.buffer.read().split()` directly; avoid building throw-away lists)
+- Minimise temporary Python objects (e.g. stream integers from `stdin.buffer.read().split()` directly; avoid building throw-away lists)
+- **Do not include any comments in the solution code. Solution files must be completely free of comments.**
 
 ## 3a. PyPy-specific Performance Hints
-- Each additional pass over an `n = 2·10⁵` array costs ≈40–60 ms in
-  PyPy's interpreter **before** JIT kicks in.  If the algorithm can
-  succeed in one backwards/forwards scan, do so.
-- Hash-table probes dominate: two `set.__contains__` per element is fine;
-  eight per element risks TLE.  Merge look-ups when possible.
-- The JIT warms up per function.  A tight loop in a helper that's called
-  once per test case will never be JIT-compiled if the case is small.
-  Keep the hot loop in the main function for large-`n` problems.
+- Each additional pass over an `n = 2·10⁵` array costs ≈40–60 ms in PyPy's interpreter **before** JIT kicks in.  If the algorithm can succeed in one backwards/forwards scan, do so.
+- Hash-table probes dominate: two `set.__contains__` per element is fine; eight per element risks TLE.  Merge look-ups when possible.
+- The JIT warms up per function.  A tight loop in a helper that's called once per test case will never be JIT-compiled if the case is small. Keep the hot loop in the main function for large-`n` problems.
 
 ## 4. Algorithm Documentation
 - Briefly explain the algorithm and prove its correctness in ≤ 5 sentences
