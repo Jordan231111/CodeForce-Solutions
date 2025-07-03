@@ -11,7 +11,7 @@ For **every problem**, follow these instructions
 
 ## 2. Environment & Automation Setup
 - All Codeforces solutions must be written in Python using the **`pypy3.10`** executable and must leverage the predefined snippet templates [python.json](mdc:python.json) to scaffold algorithms quickly.
-- All files must reside directly inside the top-level `CodeForce/` directory which you must always assume we are already in (do not create ANY subfolders or duplicate directories).
+- All files must reside directly inside the top-level directory which you must always assume we are already in (do not create ANY subfolders or duplicate directories).
 - Every solution file must begin with the 67-line template snippet defined in `template.py` (lines 1–67); include it verbatim before your problem-specific code.
 - **AUTOMATION REQUIRED:** Use Competitive Companion + parsing scripts for automatic test case download
 - Solutions must be optimized for PyPy's JIT compiler
