@@ -55,6 +55,70 @@ For **every problem**, follow these instructions
 - **Validation:** Show comprehensive test results table (✓/✗)
 - **Separate Test File:** Store all testing logic in its own Python source (e.g., `test_<problem_id>.py`) placed alongside the solution; do not embed tests inside the main solution script.
 
+### 6a. Test File Template
+Always use this structure for test files:
+```python
+import subprocess
+import sys
+import time
+
+def run_test_case(params...):
+    # Calculate expected output
+    # Logic to determine expected result based on test parameters
+    
+    # Prepare input
+    test_input = f"1\n{param1} {param2} ... \n"
+    
+    # Run the solution
+    process = subprocess.Popen(
+        ["pypy3.10", "solution_file.py"], 
+        stdin=subprocess.PIPE, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    
+    stdout, stderr = process.communicate(test_input)
+    
+    # Check output
+    actual = stdout.strip()  # Adjust parsing as needed
+    
+    if actual == expected:
+        return True, f"PASSED: params..., output={actual}"
+    else:
+        return False, f"FAILED: params..., expected={expected}, got={actual}"
+
+def run_all_tests():
+    test_cases = [
+        # Sample test cases from problem statement
+        (param1, param2, ...),
+        
+        # Edge cases
+        # Add minimum 2 edge cases with documentation
+    ]
+    
+    results = []
+    start_time = time.time()
+    
+    for params... in test_cases:
+        success, message = run_test_case(params...)
+        results.append((success, message))
+    
+    end_time = time.time()
+    
+    # Print results
+    all_passed = all(success for success, _ in results)
+    
+    print("Test Results:")
+    for success, message in results:
+        print(f"{'✓' if success else '✗'} {message}")
+    
+    print(f"\nExecution time: {end_time - start_time:.4f} seconds")
+    print(f"Overall: {'PASSED' if all_passed else 'FAILED'}")
+
+if __name__ == "__main__":
+    run_all_tests()
+
 ## 7. Post-Solution Analysis
 - **Alternative Approaches:** Briefly mention other possible solutions
 - **Optimization Opportunities:** Identify potential improvements

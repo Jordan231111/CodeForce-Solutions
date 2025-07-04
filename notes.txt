@@ -1,0 +1,12 @@
+Ceiling division: -(-a//b) or (a+b-1)//b
+
+Testing: pypy3.10 Chef_and_his_Apps.py < sample_input.txt
+
+
+
+
+
+
+
+
+
