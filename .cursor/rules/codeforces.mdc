@@ -36,9 +36,9 @@ For **every problem**, follow these instructions
 1. I/O
    • Read the entire stdin buffer once using `input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline` to avoid per-line overhead.
 
-2. Grid / 2-D data
-   • Represent the grid as ONE flat list/array of length R·C (`idx = r*W + c`).
-   • Add a two-cell-wide sentinel border initialised to goal/zero so no boundary checks are needed in the hot loop.
+2. Data Structures for Grids & Graphs
+   • **Dense Grids:** For problems where most cells are processed (e.g., a full maze), represent the grid as ONE flat list/array of length R·C (`idx = r*W + c`). Add a sentinel border to eliminate boundary checks in hot loops.
+   • **Sparse Grids/Graphs:** For problems with a few points/edges in a large space (like the example), use a `set` or `dict` for O(1) lookups of the relevant features. This is far more memory- and time-efficient than a large, empty array.
 
 3. State encoding
    • Use ONE integer per cell: `INF = 1 << 30` (unseen), `INF2 = 1 << 31` (one good neighbour), any smaller value = final distance.
@@ -144,6 +144,51 @@ def run_all_tests():
     
     print(f"\nExecution time: {end_time - start_time:.4f} seconds")
     print(f"Overall: {'PASSED' if all_passed else 'FAILED'}")
+
+# ---- New helper for randomised stress testing ----
+def stress_test(max_n=10**5, num_tests=100, verbose=False):
+    """Generate random test cases and compare solution with reference."""
+    import random, subprocess, os, time, sys
+
+    passed = 0
+    start = time.time()
+    for _ in range(num_tests):
+        # ---------------------------------------------------------------
+        # TODO: Replace with problem-specific random case generator
+        # Example below assumes a single integer input; adjust as needed.
+        n = random.randint(1, max_n)
+        test_input = f"1\n{n}\n"
+        # ---------------------------------------------------------------
+
+        # Run the contestant solution
+        proc_sol = subprocess.Popen(
+            ["pypy3.10", "solution_file.py"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        out_sol, err_sol = proc_sol.communicate(test_input)
+
+        # Run the reference (brute-force) solution if available
+        proc_ref = subprocess.Popen(
+            ["pypy3.10", "brute.py"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        out_ref, err_ref = proc_ref.communicate(test_input)
+
+        if out_sol.strip() != out_ref.strip():
+            print("\nMISMATCH FOUND:\nInput:\n", test_input, sep="")
+            print("Output:", out_sol, "\nExpected:", out_ref)
+            return
+        passed += 1
+        if verbose and passed % 10 == 0:
+            print(f"{passed}/{num_tests} ok", end="\r", flush=True)
+    end = time.time()
+    print(f"\nStress testing completed: {passed}/{num_tests} cases passed in {end - start:.2f}s")
 
 if __name__ == "__main__":
     run_all_tests()
