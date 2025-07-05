@@ -31,6 +31,35 @@ For **every problem**, follow these instructions
 - Hash-table probes dominate: two `set.__contains__` per element is fine; eight per element risks TLE.  Merge look-ups when possible.
 - The JIT warms up per function.  A tight loop in a helper that's called once per test case will never be JIT-compiled if the case is small. Keep the hot loop in the main function for large-`n` problems.
 
+## 3b. PyPy Micro-optimisation Mandates (ALWAYS apply unless the task is I/O-bound)
+
+1. I/O
+   • Read the entire stdin buffer once using `input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline` to avoid per-line overhead.
+
+2. Grid / 2-D data
+   • Represent the grid as ONE flat list/array of length R·C (`idx = r*W + c`).
+   • Add a two-cell-wide sentinel border initialised to goal/zero so no boundary checks are needed in the hot loop.
+
+3. State encoding
+   • Use ONE integer per cell: `INF = 1 << 30` (unseen), `INF2 = 1 << 31` (one good neighbour), any smaller value = final distance.
+
+4. Neighbour processing
+   • Unroll the four directions explicitly; avoid `for dr,dc in DIR_4` tuple loops.
+   • Use simple ±1 / ±rowStride arithmetic; avoid div/mod unless essential.
+
+5. Queue discipline
+   • Maintain a pre-allocated plain Python list as a FIFO (`q = [0]*(R*C)`); track `head`, `tail` indices manually.  No `deque`/`defaultdict`.
+
+6. Memory / object hygiene
+   • Do NOT create tuples/lists/sets inside the inner loop.
+   • Pull frequently-used globals into local variables at the top of `solve()`.
+
+7. Hot-loop footprint check
+   • Aim for ≤3 memory accesses and ≤2 branches per neighbour visit.
+
+8. Quick smoke-test before submission
+   • On a synthetic worst-case (R=W=3000) ensure local run-time < 0.6 s on a standard laptop.
+
 ## 4. Algorithm Documentation
 - Briefly explain the algorithm and prove its correctness in ≤ 5 sentences
 - **Must include:** Why this approach works and why alternatives won't

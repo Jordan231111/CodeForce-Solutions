@@ -6,7 +6,7 @@ Testing: pypy3.10 Chef_and_his_Apps.py < sample_input.txt
 
 
 
-
+sqrt
 
 
 
