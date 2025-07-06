@@ -1,0 +1,211 @@
+---
+trigger: always_on
+---
+
+For **every problem**, follow these instructions
+
+## 1. Problem-Solving Methodology (CRITICAL FIRST STEP)
+- **Pattern Recognition:** Identify which standard technique/algorithm this problem requires
+- **Solution Path:** Build logical steps from problem statement to solution approach
+- **Edge Case Analysis:** Consider boundary conditions before coding
+- **Complexity Estimation:** Estimate time/space complexity before implementation
+
+## 2. Environment & Automation Setup
+- All Codeforces solutions must be written in Python using the **`pypy3.10`** executable and must leverage the predefined snippet templates [python.json](mdc:python.json) to scaffold algorithms quickly.
+- All files must reside directly inside the top-level directory which you must always assume we are already in (do not create ANY subfolders or duplicate directories).
+- Every solution file must begin with the 67-line template snippet defined in `template.py` (lines 1–67); include it verbatim before your problem-specific code.
+- **AUTOMATION REQUIRED:** Use Competitive Companion + parsing scripts for automatic test case download
+- Solutions must be optimized for PyPy's JIT compiler
+- **Never use web search unless the user explicitly requests it in their message.**
+- **Never use `sys.setrecursionlimit` (e.g., `sys.setrecursionlimit(1 << 25)`)** as it will guarantee memory limit exceeded on Codeforces.
+
+## 3. Code Quality Standards
+- Use concise, human-like variable names (e.g., n, m, a, b, res, ans, etc.) for speed, as is common in competitive programming
+- Optimize critical sections (inner loops, repeated operations)
+- Follow template-driven approach for faster implementation
+- Prefer **single-pass scans with early exit** whenever possible
+- Minimise temporary Python objects (e.g. stream integers from `stdin.buffer.read().split()` directly; avoid building throw-away lists)
+- **Do not include any comments in the solution code. Solution files must be completely free of comments.**
+
+## 3a. PyPy-specific Performance Hints
+- Each additional pass over an `n = 2·10⁵` array costs ≈40–60 ms in PyPy's interpreter **before** JIT kicks in.  If the algorithm can succeed in one backwards/forwards scan, do so.
+- Hash-table probes dominate: two `set.__contains__` per element is fine; eight per element risks TLE.  Merge look-ups when possible.
+- The JIT warms up per function.  A tight loop in a helper that's called once per test case will never be JIT-compiled if the case is small. Keep the hot loop in the main function for large-`n` problems.
+
+## 3b. PyPy Micro-optimisation Mandates (ALWAYS apply unless the task is I/O-bound)
+
+1. I/O
+   • Read the entire stdin buffer once using `input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline` to avoid per-line overhead.
+   • When total tokens ≳ 1e4, prefer `data = io.BytesIO(os.read(0, os.fstat(0).st_size)).read().split()` and index into `data`.
+
+2. Data Structures for Grids & Graphs
+   • **Dense Grids:** For problems where most cells are processed (e.g., a full maze), represent the grid as ONE flat list/array of length R·C (`idx = r*W + c`). Add a sentinel border to eliminate boundary checks in hot loops.
+   • **Sparse Grids/Graphs:** For problems with a few points/edges in a large space, use a `set` or `dict` for O(1) lookups of the relevant features. This is far more memory- and time-efficient than a large, empty array.
+
+3. State encoding
+   • Use ONE integer per cell: `INF = 1 << 30` (unseen), `INF2 = 1 << 31` (one good neighbour), any smaller value = final distance.
+
+4. Neighbour processing
+   • Unroll the four directions explicitly; avoid `for dr,dc in DIR_4` tuple loops.
+   • Use simple ±1 / ±rowStride arithmetic; avoid div/mod unless essential.
+
+5. Queue discipline
+   • Maintain a pre-allocated plain Python list as a FIFO (`q = [0]*(R*C)`); track `head`, `tail` indices manually.  No `deque`/`defaultdict`.
+
+6. Memory / object hygiene
+   • Do NOT create tuples/lists/sets inside the inner loop.
+   • Pull frequently-used globals into local variables at the top of `solve()`.
+
+7. Hot-loop footprint check
+   • Aim for ≤3 memory accesses and ≤2 branches per neighbour visit.
+
+8. Quick smoke-test before submission
+   • On a synthetic worst-case (R=W=3000) ensure local run-time < 0.6 s on a standard laptop.
+
+9. Key design
+   • Store 2-D coordinates as `(r, c)` tuples or a 64-bit bit-pack (`r<<20 | c`); never `r*M+c` with large M.
+   • Large-integer hashes balloon constant factors and can single-handedly cause TLE.
+   • Rule of thumb: if `r*M+c` might exceed 2^30 (≈1e9), switch to tuple/bit-pack; beyond 2^64 the slowdown is severe.
+
+## 4. Algorithm Documentation
+- Briefly explain the algorithm and prove its correctness in ≤ 5 sentences
+- **Must include:** Why this approach works and why alternatives won't
+
+## 4a. Fast-Fail Checklist (add to every solution write-up)
+  1. Is there any pass over the input that can be fused with another?
+  2. Can membership tests be merged into one `set` instead of two?
+  3. Is there an early return once the answer is known?
+  4. Does the I/O layer avoid building large intermediate lists?
+  5. Are any hot-loop operations using big-integers, strings, or other heavyweight objects?
+  6. Have you benchmarked under **PyPy3.10** on a worst-case input? CPython timings are not representative.
+
+## 5. Complexity Analysis & Validation
+- **Time Complexity:** O(?) with brief justification
+- **Space Complexity:** O(?) with brief justification  
+- **Constraint Check:** Verify solution works within time limits (typically 1-2 seconds)
+- **Mathematical Proof:** Ensure the solution handles maximum constraints
+
+## 6. Comprehensive Testing Protocol
+- **Automated Sample Testing:** Use parsing tools to test against official samples automatically
+- **Edge Case Testing:** Include ≥ 2 custom edge/boundary cases with documentation
+- **Stress Testing:** Generate random test cases and compare with brute force solution when applicable
+- **Execution:** Run all tests using `pypy3.10` immediately in the same response
+- **Validation:** Show comprehensive test results table (✓/✗)
+- **Separate Test File:** Store all testing logic in its own Python source (e.g., `test_<problem_id>.py`) placed alongside the solution; do not embed tests inside the main solution script.
+
+### 6a. Test File Template
+Always use this structure for test files:
+```python
+import subprocess
+import sys
+import time
+
+def run_test_case(params...):
+    # Calculate expected output
+    # Logic to determine expected result based on test parameters
+    
+    # Prepare input
+    test_input = f"1\n{param1} {param2} ... \n"
+    
+    # Run the solution
+    process = subprocess.Popen(
+        ["pypy3.10", "solution_file.py"], 
+        stdin=subprocess.PIPE, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    
+    stdout, stderr = process.communicate(test_input)
+    
+    # Check output
+    actual = stdout.strip()  # Adjust parsing as needed
+    
+    if actual == expected:
+        return True, f"PASSED: params..., output={actual}"
+    else:
+        return False, f"FAILED: params..., expected={expected}, got={actual}"
+
+def run_all_tests():
+    test_cases = [
+        # Sample test cases from problem statement
+        (param1, param2, ...),
+        
+        # Edge cases
+        # Add minimum 2 edge cases with documentation
+    ]
+    
+    results = []
+    start_time = time.time()
+    
+    for params... in test_cases:
+        success, message = run_test_case(params...)
+        results.append((success, message))
+    
+    end_time = time.time()
+    
+    # Print results
+    all_passed = all(success for success, _ in results)
+    
+    print("Test Results:")
+    for success, message in results:
+        print(f"{'✓' if success else '✗'} {message}")
+    
+    print(f"\nExecution time: {end_time - start_time:.4f} seconds")
+    print(f"Overall: {'PASSED' if all_passed else 'FAILED'}")
+
+# ---- New helper for randomised stress testing ----
+def stress_test(max_n=10**5, num_tests=100, verbose=False):
+    """Generate random test cases and compare solution with reference."""
+    import random, subprocess, os, time, sys
+
+    passed = 0
+    start = time.time()
+    for _ in range(num_tests):
+        # ---------------------------------------------------------------
+        # TODO: Replace with problem-specific random case generator
+        # Example below assumes a single integer input; adjust as needed.
+        n = random.randint(1, max_n)
+        test_input = f"1\n{n}\n"
+        # ---------------------------------------------------------------
+
+        # Run the contestant solution
+        proc_sol = subprocess.Popen(
+            ["pypy3.10", "solution_file.py"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        out_sol, err_sol = proc_sol.communicate(test_input)
+
+        # Run the reference (brute-force) solution if available
+        proc_ref = subprocess.Popen(
+            ["pypy3.10", "brute.py"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        out_ref, err_ref = proc_ref.communicate(test_input)
+
+        if out_sol.strip() != out_ref.strip():
+            print("\nMISMATCH FOUND:\nInput:\n", test_input, sep="")
+            print("Output:", out_sol, "\nExpected:", out_ref)
+            return
+        passed += 1
+        if verbose and passed % 10 == 0:
+            print(f"{passed}/{num_tests} ok", end="\r", flush=True)
+    end = time.time()
+    print(f"\nStress testing completed: {passed}/{num_tests} cases passed in {end - start:.2f}s")
+
+if __name__ == "__main__":
+    run_all_tests()
+
+## 7. Post-Solution Analysis
+- **Alternative Approaches:** Briefly mention other possible solutions
+- **Optimization Opportunities:** Identify potential improvements
+- **Learning Notes:** Document new techniques or insights gained
+
+## 8. Additional Notes
+- When using coordinate compression, ensure the compressed grid remains O(K) in size; avoid BFS/DP over an O(K²) grid of compressed cells.
