@@ -35,10 +35,11 @@ For **every problem**, follow these instructions
 
 1. I/O
    • Read the entire stdin buffer once using `input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline` to avoid per-line overhead.
+   • When total tokens ≳ 1e4, prefer `data = io.BytesIO(os.read(0, os.fstat(0).st_size)).read().split()` and index into `data`.
 
 2. Data Structures for Grids & Graphs
    • **Dense Grids:** For problems where most cells are processed (e.g., a full maze), represent the grid as ONE flat list/array of length R·C (`idx = r*W + c`). Add a sentinel border to eliminate boundary checks in hot loops.
-   • **Sparse Grids/Graphs:** For problems with a few points/edges in a large space (like the example), use a `set` or `dict` for O(1) lookups of the relevant features. This is far more memory- and time-efficient than a large, empty array.
+   • **Sparse Grids/Graphs:** For problems with a few points/edges in a large space, use a `set` or `dict` for O(1) lookups of the relevant features. This is far more memory- and time-efficient than a large, empty array.
 
 3. State encoding
    • Use ONE integer per cell: `INF = 1 << 30` (unseen), `INF2 = 1 << 31` (one good neighbour), any smaller value = final distance.
@@ -60,6 +61,11 @@ For **every problem**, follow these instructions
 8. Quick smoke-test before submission
    • On a synthetic worst-case (R=W=3000) ensure local run-time < 0.6 s on a standard laptop.
 
+9. Key design
+   • Store 2-D coordinates as `(r, c)` tuples or a 64-bit bit-pack (`r<<20 | c`); never `r*M+c` with large M.
+   • Large-integer hashes balloon constant factors and can single-handedly cause TLE.
+   • Rule of thumb: if `r*M+c` might exceed 2^30 (≈1e9), switch to tuple/bit-pack; beyond 2^64 the slowdown is severe.
+
 ## 4. Algorithm Documentation
 - Briefly explain the algorithm and prove its correctness in ≤ 5 sentences
 - **Must include:** Why this approach works and why alternatives won't
@@ -69,6 +75,8 @@ For **every problem**, follow these instructions
   2. Can membership tests be merged into one `set` instead of two?
   3. Is there an early return once the answer is known?
   4. Does the I/O layer avoid building large intermediate lists?
+  5. Are any hot-loop operations using big-integers, strings, or other heavyweight objects?
+  6. Have you benchmarked under **PyPy3.10** on a worst-case input? CPython timings are not representative.
 
 ## 5. Complexity Analysis & Validation
 - **Time Complexity:** O(?) with brief justification
@@ -197,3 +205,6 @@ if __name__ == "__main__":
 - **Alternative Approaches:** Briefly mention other possible solutions
 - **Optimization Opportunities:** Identify potential improvements
 - **Learning Notes:** Document new techniques or insights gained
+
+## 8. Additional Notes
+- When using coordinate compression, ensure the compressed grid remains O(K) in size; avoid BFS/DP over an O(K²) grid of compressed cells.
