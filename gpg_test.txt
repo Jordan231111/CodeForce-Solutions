@@ -1,2 +1,0 @@
-This is a test file to verify GPG signing
-Additional line to test explicit signing
