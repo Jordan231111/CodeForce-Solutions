@@ -1,11 +1,6 @@
-import sys
-import os
-import io
-
-# 67-line template from problem specification
 # input
-# I have replaced the default sys.stdin.readline with a faster one for performance.
-input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline
+import sys
+input = sys.stdin.readline
 II = lambda : int(input())
 MI = lambda : map(int, input().split())
 LI = lambda : [int(a) for a in input().split()]
@@ -60,10 +55,6 @@ DIR_8 = [[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1]]
 DIR_BISHOP = [[-1,1],[1,1],[1,-1],[-1,-1]]
 prime60 = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59]
 sys.set_int_max_str_digits(0)
-# sys.setrecursionlimit(10**6)
-# import pypyjit
-# pypyjit.set_param('max_unroll_recursion=-1')
-
 from collections import defaultdict,deque
 from heapq import heappop,heappush
 from bisect import bisect_left,bisect_right
@@ -71,32 +62,26 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-def solve():
-    n, m = MI()
-    segs_by_r = [[] for _ in range(m + 1)]
-    
-    total_prob_no_seg = 1
-    
-    for _ in range(n):
-        l, r, p, q = MI()
-        
-        inv_q = pow(q, mod - 2, mod)
-        
-        prob_no_s = (q - p) * inv_q % mod
-        total_prob_no_seg = (total_prob_no_seg * prob_no_s) % mod
-        
-        R_s = p * pow(q - p, mod - 2, mod) % mod
-        
-        segs_by_r[r].append((l, R_s))
-        
-    dp = [0] * (m + 1)
-    dp[0] = 1
-    
-    for i in range(1, m + 1):
-        for l, R in segs_by_r[i]:
-            dp[i] = (dp[i] + dp[l - 1] * R) % mod
-            
-    ans = dp[m] * total_prob_no_seg % mod
-    print(ans)
+from math import gcd
+pre=[0]*211
+cnt=0
+for i in range(1,211):
+    if gcd(i,210)==1:
+        cnt+=1
+    pre[i]=cnt
+phi=cnt
 
-solve()
+def f(n:int)->int:
+    if n<=0:
+        return 0
+    return (n//210)*phi + pre[n%210]
+
+def main():
+    t=II()
+    out=[]
+    for _ in range(t):
+        l,r=MI()
+        out.append(str(f(r)-f(l-1)))
+    print('\n'.join(out))
+if __name__=="__main__":
+    main() 

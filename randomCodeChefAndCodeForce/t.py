@@ -55,37 +55,85 @@ DIR_8 = [[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1]]
 DIR_BISHOP = [[-1,1],[1,1],[1,-1],[-1,-1]]
 prime60 = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59]
 sys.set_int_max_str_digits(0)
-# sys.setrecursionlimit(10**6)
-# import pypyjit
-# pypyjit.set_param('max_unroll_recursion=-1')
 
 from collections import defaultdict,deque
 from heapq import heappop,heappush
 from bisect import bisect_left,bisect_right
-import os
-import io
-
-# Fast I/O
-input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline
-
 DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-T = II()
-for _ in range(T):
-    N = II()
-    A = LI()
-    A.sort(reverse=True)
-    pre = [0]
-    for v in A:
-        pre.append(pre[-1] + v)
-    ans = [-10**18] * (2 * N + 1)
-    for t in range(1, N + 1):
-        ps = pre[t]
-        for c in range(t + 1):
-            k = t + c
-            val = ps + c * (2 * t - c - 1) // 2
-            if ans[k] < val:
-                ans[k] = val
-    print(*ans[1:]) 
+def is_good(s):
+    n = len(s)
+    if n <= 2:
+        return False
+    
+    for k in range(2, n):
+        if n % k == 0:
+            rows = n // k
+            cols = k
+            
+            all_cols_valid = True
+            for c in range(cols):
+                has_zero = False
+                has_one = False
+                for r in range(rows):
+                    idx = r * cols + c
+                    if s[idx] == '0':
+                        has_zero = True
+                    else:
+                        has_one = True
+                
+                if not (has_zero and has_one):
+                    all_cols_valid = False
+                    break
+            
+            if all_cols_valid:
+                return True
+    
+    return False
+
+def is_beautiful(s):
+    n = len(s)
+    if n <= 2:
+        return False
+    
+    if is_good(s):
+        return True
+    
+    zeros = s.count('0')
+    ones = s.count('1')
+    
+    for target_len in range(4, n + 1):
+        for k in range(2, target_len):
+            if target_len % k == 0:
+                if zeros >= k and ones >= k:
+                    z_positions = [i for i, c in enumerate(s) if c == '0']
+                    o_positions = [i for i, c in enumerate(s) if c == '1']
+                    
+                    if len(z_positions) >= k and len(o_positions) >= k:
+                        total_needed = target_len
+                        if zeros >= total_needed - k and ones >= k:
+                            return True
+                        if ones >= total_needed - k and zeros >= k:
+                            return True
+    
+    return False
+
+def solve():
+    n = II()
+    s = SI()
+    
+    max_len = 0
+    
+    for i in range(n):
+        for j in range(i, n):
+            substr = s[i:j+1]
+            if not is_beautiful(substr):
+                max_len = max(max_len, len(substr))
+    
+    return max_len
+
+t = II()
+for _ in range(t):
+    print(solve()) 

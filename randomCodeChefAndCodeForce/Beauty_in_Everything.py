@@ -1,11 +1,6 @@
-import sys
-import os
-import io
-
-# 67-line template from problem specification
 # input
-# I have replaced the default sys.stdin.readline with a faster one for performance.
-input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline
+import sys
+input = sys.stdin.readline
 II = lambda : int(input())
 MI = lambda : map(int, input().split())
 LI = lambda : [int(a) for a in input().split()]
@@ -44,6 +39,7 @@ ordallalp = lambda s : ord(s)-39 if s.isupper() else ord(s)-97
 yes = lambda : print("Yes")
 no = lambda : print("No")
 yn = lambda flag : print("Yes" if flag else "No")
+
 def acc(a:list[int]):
     sa = [0]*(len(a)+1)
     for i in range(len(a)):
@@ -60,10 +56,6 @@ DIR_8 = [[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1]]
 DIR_BISHOP = [[-1,1],[1,1],[1,-1],[-1,-1]]
 prime60 = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59]
 sys.set_int_max_str_digits(0)
-# sys.setrecursionlimit(10**6)
-# import pypyjit
-# pypyjit.set_param('max_unroll_recursion=-1')
-
 from collections import defaultdict,deque
 from heapq import heappop,heappush
 from bisect import bisect_left,bisect_right
@@ -71,32 +63,31 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-def solve():
-    n, m = MI()
-    segs_by_r = [[] for _ in range(m + 1)]
-    
-    total_prob_no_seg = 1
-    
-    for _ in range(n):
-        l, r, p, q = MI()
-        
-        inv_q = pow(q, mod - 2, mod)
-        
-        prob_no_s = (q - p) * inv_q % mod
-        total_prob_no_seg = (total_prob_no_seg * prob_no_s) % mod
-        
-        R_s = p * pow(q - p, mod - 2, mod) % mod
-        
-        segs_by_r[r].append((l, R_s))
-        
-    dp = [0] * (m + 1)
-    dp[0] = 1
-    
-    for i in range(1, m + 1):
-        for l, R in segs_by_r[i]:
-            dp[i] = (dp[i] + dp[l - 1] * R) % mod
-            
-    ans = dp[m] * total_prob_no_seg % mod
-    print(ans)
+def longest_at_most_one(s:str, ch:str) -> int:
+    left = 0
+    cnt = 0
+    res = 0
+    for right,c in enumerate(s):
+        if c == ch:
+            cnt += 1
+        while cnt > 1:
+            if s[left] == ch:
+                cnt -= 1
+            left += 1
+        res = max(res, right - left + 1)
+    return res
 
-solve()
+def solve():
+    t = II()
+    out = []
+    for _ in range(t):
+        II()
+        s = SI()
+        ans = max(longest_at_most_one(s,'0'), longest_at_most_one(s,'1'))
+        if '0101' in s or '1010' in s:
+            ans = max(ans, 4)
+        out.append(str(ans))
+    print('\n'.join(out))
+
+if __name__ == "__main__":
+    solve() 

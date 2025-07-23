@@ -1,11 +1,6 @@
-import sys
-import os
-import io
-
-# 67-line template from problem specification
 # input
-# I have replaced the default sys.stdin.readline with a faster one for performance.
-input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline
+import sys
+input = sys.stdin.readline
 II = lambda : int(input())
 MI = lambda : map(int, input().split())
 LI = lambda : [int(a) for a in input().split()]
@@ -44,6 +39,7 @@ ordallalp = lambda s : ord(s)-39 if s.isupper() else ord(s)-97
 yes = lambda : print("Yes")
 no = lambda : print("No")
 yn = lambda flag : print("Yes" if flag else "No")
+
 def acc(a:list[int]):
     sa = [0]*(len(a)+1)
     for i in range(len(a)):
@@ -71,32 +67,71 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-def solve():
-    n, m = MI()
-    segs_by_r = [[] for _ in range(m + 1)]
-    
-    total_prob_no_seg = 1
-    
-    for _ in range(n):
-        l, r, p, q = MI()
-        
-        inv_q = pow(q, mod - 2, mod)
-        
-        prob_no_s = (q - p) * inv_q % mod
-        total_prob_no_seg = (total_prob_no_seg * prob_no_s) % mod
-        
-        R_s = p * pow(q - p, mod - 2, mod) % mod
-        
-        segs_by_r[r].append((l, R_s))
-        
-    dp = [0] * (m + 1)
-    dp[0] = 1
-    
-    for i in range(1, m + 1):
-        for l, R in segs_by_r[i]:
-            dp[i] = (dp[i] + dp[l - 1] * R) % mod
-            
-    ans = dp[m] * total_prob_no_seg % mod
-    print(ans)
+class SegTree:
+    __slots__ = ("n","k","size","data")
+    def __init__(self,a,b,k):
+        self.n=len(a)
+        self.k=k
+        self.size=1
+        while self.size<self.n:
+            self.size<<=1
+        self.data=[(0,0,0,0)]*(self.size*2)
+        for i in range(self.n):
+            self.data[self.size+i]=self._leaf(a[i],b[i])
+        for i in range(self.size-1,0,-1):
+            self.data[i]=self._merge(self.data[i<<1],self.data[i<<1|1])
+    def _leaf(self,ai,bi):
+        if ai+self.k<bi:
+            s0=bi;f0=1
+        else:
+            s0=ai;f0=0
+        if bi+self.k<ai:
+            s1=ai;f1=0
+        else:
+            s1=bi;f1=1
+        return (s0,f0,s1,f1)
+    @staticmethod
+    def _merge(l,r):
+        s0l,f0l,s1l,f1l=l
+        s0r,f0r,s1r,f1r=r
+        if f0l==0:
+            sc0=s0l+s0r;fo0=f0r
+        else:
+            sc0=s0l+s1r;fo0=f1r
+        if f1l==0:
+            sc1=s1l+s0r;fo1=f0r
+        else:
+            sc1=s1l+s1r;fo1=f1r
+        return (sc0,fo0,sc1,fo1)
+    def update(self,idx,ai,bi):
+        p=self.size+idx
+        self.data[p]=self._leaf(ai,bi)
+        p>>=1
+        while p:
+            self.data[p]=self._merge(self.data[p<<1],self.data[p<<1|1])
+            p>>=1
+    def query(self):
+        return self.data[1][0]
 
-solve()
+def solve():
+    t=II()
+    res=[]
+    for _ in range(t):
+        n,k=MI()
+        A=LI()
+        B=LI()
+        st=SegTree(A,B,k)
+        q=II()
+        for _ in range(q):
+            typ,p,x=MI()
+            p-=1
+            if typ==1:
+                A[p]=x
+            else:
+                B[p]=x
+            st.update(p,A[p],B[p])
+            res.append(str(st.query()))
+    sys.stdout.write("\n".join(res))
+
+if __name__=="__main__":
+    solve() 

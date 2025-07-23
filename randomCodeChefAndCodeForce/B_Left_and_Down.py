@@ -1,11 +1,6 @@
-import sys
-import os
-import io
-
-# 67-line template from problem specification
 # input
-# I have replaced the default sys.stdin.readline with a faster one for performance.
-input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline
+import sys
+input = sys.stdin.readline
 II = lambda : int(input())
 MI = lambda : map(int, input().split())
 LI = lambda : [int(a) for a in input().split()]
@@ -44,6 +39,7 @@ ordallalp = lambda s : ord(s)-39 if s.isupper() else ord(s)-97
 yes = lambda : print("Yes")
 no = lambda : print("No")
 yn = lambda flag : print("Yes" if flag else "No")
+
 def acc(a:list[int]):
     sa = [0]*(len(a)+1)
     for i in range(len(a)):
@@ -71,32 +67,18 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-def solve():
-    n, m = MI()
-    segs_by_r = [[] for _ in range(m + 1)]
-    
-    total_prob_no_seg = 1
-    
-    for _ in range(n):
-        l, r, p, q = MI()
-        
-        inv_q = pow(q, mod - 2, mod)
-        
-        prob_no_s = (q - p) * inv_q % mod
-        total_prob_no_seg = (total_prob_no_seg * prob_no_s) % mod
-        
-        R_s = p * pow(q - p, mod - 2, mod) % mod
-        
-        segs_by_r[r].append((l, R_s))
-        
-    dp = [0] * (m + 1)
-    dp[0] = 1
-    
-    for i in range(1, m + 1):
-        for l, R in segs_by_r[i]:
-            dp[i] = (dp[i] + dp[l - 1] * R) % mod
-            
-    ans = dp[m] * total_prob_no_seg % mod
-    print(ans)
+import math
 
-solve()
+def solve():
+    t = II()
+    for _ in range(t):
+        a,b,k = MI()
+        g = math.gcd(a,b)
+        thr = max((a + k - 1)//k, (b + k - 1)//k)
+        if g >= thr:
+            print(1)
+        else:
+            print(2)
+
+if __name__ == "__main__":
+    solve() 
