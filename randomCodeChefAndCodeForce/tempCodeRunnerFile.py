@@ -1,5 +1,3 @@
-import sys
-import os
 import io
 
 # 67-line template from problem specification
