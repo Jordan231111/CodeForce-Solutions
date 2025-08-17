@@ -66,56 +66,68 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-def nCr_prepare(n):
-    fact = [1]*(n+1)
-    for i in range(1,n+1):
-        fact[i] = fact[i-1]*i%mod
-    invfact = [1]*(n+1)
-    invfact[n] = pow(fact[n], mod-2, mod)
-    for i in range(n,0,-1):
-        invfact[i-1] = invfact[i]*i%mod
-    return fact, invfact
-
-def nCr(n,k,fact,invfact):
-    if k<0 or k>n or n<0:
-        return 0
-    return fact[n]*invfact[k]%mod*invfact[n-k]%mod
-
-def main():
-    data = list(map(int, sys.stdin.buffer.read().split()))
+def solve():
+    data = sys.stdin.buffer.read().split()
     it = iter(data)
-    t = next(it)
-    cases = []
-    maxd = 0
-    for _ in range(t):
-        h = next(it); w = next(it); k = next(it)
-        cases.append((h,w,k))
-        d = h + w - 2
-        if d > maxd:
-            maxd = d
-    fact, invfact = nCr_prepare(maxd if maxd>0 else 1)
-    inv2 = (mod+1)//2
+    t = int(next(it))
     out = []
-    for h,w,k in cases:
-        d = h + w - 2
-        nsp = nCr(d, h-1, fact, invfact)
-        outside = (2*(h-1)%mod)*((w-1)%mod)%mod
-        if k < d:
-            out.append('0')
-        elif k == d:
-            out.append(str(nsp))
-        elif k == d+1:
-            ans = nsp * outside % mod
-            out.append(str(ans))
-        else:
-            c2 = outside * ((outside-1)%mod) % mod
-            c2 = c2 * inv2 % mod
-            pairs = (d-1)%mod * nCr(d-2, h-2, fact, invfact) % mod
-            ans = (nsp * c2 - pairs) % mod
-            out.append(str(ans))
+    for _ in range(t):
+        n = int(next(it))
+        a = next(it).decode()
+        b = next(it).decode()
+
+        oa = [0]*(n+1)
+        for i in range(1, n+1):
+            oa[i] = oa[i-1] + (1 if a[i-1] == '1' else 0)
+
+        ob = [0]*(n+1)
+        for j in range(1, n+1):
+            ob[j] = ob[j-1] + (1 if b[j-1] == '1' else 0)
+
+        pairs = []
+        sum_ob_tot = 0
+        sum_y_tot = n*(n+1)//2
+        for y in range(1, n+1):
+            oy = ob[y]
+            d = (oy << 1) - y
+            pairs.append((d, oy, y))
+            sum_ob_tot += oy
+
+        pairs.sort(key=lambda x: x[0])
+        keys = [p[0] for p in pairs]
+        pre_ob = [0]*n
+        pre_y = [0]*n
+        s1 = 0
+        s2 = 0
+        for i, (_, oy, yy) in enumerate(pairs):
+            s1 += oy
+            s2 += yy
+            pre_ob[i] = s1
+            pre_y[i] = s2
+
+        ans = 0
+        for x in range(1, n+1):
+            s = oa[x]
+            K = x - (s << 1)
+            idx = bisect_right(keys, K)
+            if idx:
+                cnt0 = idx
+                sum_ob0 = pre_ob[idx-1]
+                sum_y0 = pre_y[idx-1]
+            else:
+                cnt0 = 0
+                sum_ob0 = 0
+                sum_y0 = 0
+            cnt1 = n - cnt0
+            sum_ob1 = sum_ob_tot - sum_ob0
+            sum_y1 = sum_y_tot - sum_y0
+            ans += cnt0 * s + sum_ob0 + cnt1 * (x - s) + (sum_y1 - sum_ob1)
+
+        out.append(str(ans))
+
     sys.stdout.write("\n".join(out))
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    solve()
 
 

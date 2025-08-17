@@ -1,11 +1,6 @@
-import sys
-import os
-import io
-
-# 67-line template from problem specification
 # input
-# I have replaced the default sys.stdin.readline with a faster one for performance.
-input = io.BytesIO(os.read(0, os.fstat(0).st_size)).readline
+import sys
+input = sys.stdin.readline
 II = lambda : int(input())
 MI = lambda : map(int, input().split())
 LI = lambda : [int(a) for a in input().split()]
@@ -71,32 +66,44 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-def solve():
-    n, m = MI()
-    segs_by_r = [[] for _ in range(m + 1)]
-    
-    total_prob_no_seg = 1
-    
-    for _ in range(n):
-        l, r, p, q = MI()
-        
-        inv_q = pow(q, mod - 2, mod)
-        
-        prob_no_s = (q - p) * inv_q % mod
-        total_prob_no_seg = (total_prob_no_seg * prob_no_s) % mod
-        
-        R_s = p * pow(q - p, mod - 2, mod) % mod
-        
-        segs_by_r[r].append((l, R_s))
-        
-    dp = [0] * (m + 1)
-    dp[0] = 1
-    
-    for i in range(1, m + 1):
-        for l, R in segs_by_r[i]:
-            dp[i] = (dp[i] + dp[l - 1] * R) % mod
-            
-    ans = dp[m] * total_prob_no_seg % mod
-    print(ans)
+from math import gcd
 
-solve()
+def solve():
+    t = II()
+    for _ in range(t):
+        n,k = MI()
+        a = LI()
+        dp = [0]*(n+2)
+        S = [0]*(n+3)
+        dp[n+1] = 1
+        S[n+1] = 1
+        prev = []
+        for i in range(n, 0, -1):
+            ai = a[i-1]
+            cur = [(ai, i)]
+            lastg = ai
+            for g, l in prev:
+                g2 = gcd(g, ai)
+                if g2 == lastg:
+                    if l < cur[-1][1]:
+                        cur[-1] = (cur[-1][0], l)
+                else:
+                    cur.append((g2, l))
+                    lastg = g2
+            ans = dp[i+1]
+            m = len(cur)
+            for idx in range(m):
+                g, L = cur[idx]
+                R = cur[idx+1][1]-1 if idx+1 < m else n
+                Lp = L if L > i else i+1
+                if Lp <= R:
+                    mult = k // gcd(k, g)
+                    total = (S[Lp+1] - S[R+2]) % mod
+                    ans = (ans + (mult % mod) * total) % mod
+            dp[i] = ans
+            S[i] = (dp[i] + S[i+1]) % mod
+            prev = cur
+        print(dp[1] % mod)
+
+if __name__ == "__main__":
+    solve()

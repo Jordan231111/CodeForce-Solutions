@@ -65,68 +65,57 @@ from bisect import bisect_left,bisect_right
 DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
-from itertools import permutations
 
-def get_partitions(curr:list[int]):
-    curr.sort()
-    nn=len(curr)
-    if nn<2:
-        if nn==0:
-            return []
-        res=[]
-        for k in (1,2,0):
-            g=[[],[],[]]
-            g[k]=curr[:]
-            res.append(g)
-        return res
-    if nn==2:
-        a,b=curr
-        return [[[a],[b],[]],[[b],[a],[]],[[a],[],[b]],[[b],[],[a]],[[],[a],[b]],[[],[b],[a]]]
-    if nn==3:
-        res=[]
-        a,b,c=curr
-        for p in permutations(range(3)):
-            g=[[],[],[]]
-            g[p[0]]=[a]
-            g[p[1]]=[b]
-            g[p[2]]=[c]
-            res.append(g)
-        return res
-    s=nn//3
-    r=nn%3
-    len0=s+(1 if r>=1 else 0)
-    len1=s+(1 if r>=2 else 0)
-    sub0=curr[:len0]
-    sub1=curr[len0:len0+len1]
-    sub2=curr[len0+len1:]
-    sp0=get_partitions(sub0)
-    sp1=get_partitions(sub1)
-    sp2=get_partitions(sub2)
-    m_sub=max(len(sp0),len(sp1),len(sp2))
-    ext=[]
-    for j in range(m_sub):
-        p0=sp0[j%len(sp0)]
-        p1=sp1[j%len(sp1)]
-        p2=sp2[j%len(sp2)]
-        ext.append([p0[0]+p1[0]+p2[0],p0[1]+p1[1]+p2[1],p0[2]+p1[2]+p2[2]])
-    subs=[sub0,sub1,sub2]
-    top=[]
-    for p in permutations(range(3)):
-        g=[[],[],[]]
-        for i in range(3):
-            g[p[i]]=subs[i][:]
-        top.append(g)
-    return ext+top
+def nCr_prepare(n):
+    fact = [1]*(n+1)
+    for i in range(1,n+1):
+        fact[i] = fact[i-1]*i%mod
+    invfact = [1]*(n+1)
+    invfact[n] = pow(fact[n], mod-2, mod)
+    for i in range(n,0,-1):
+        invfact[i-1] = invfact[i]*i%mod
+    return fact, invfact
+
+def nCr(n,k,fact,invfact):
+    if k<0 or k>n or n<0:
+        return 0
+    return fact[n]*invfact[k]%mod*invfact[n-k]%mod
 
 def main():
-    n=II()
-    parts=get_partitions(list(range(1,n+1)))
-    m=len(parts)
-    out=[str(m)]
-    for g in parts:
-        perm=g[0]+g[1]+g[2]
-        out.append(' '.join(map(str,perm)))
-    sys.stdout.write('\n'.join(out))
+    data = list(map(int, sys.stdin.buffer.read().split()))
+    it = iter(data)
+    t = next(it)
+    cases = []
+    maxd = 0
+    for _ in range(t):
+        h = next(it); w = next(it); k = next(it)
+        cases.append((h,w,k))
+        d = h + w - 2
+        if d > maxd:
+            maxd = d
+    fact, invfact = nCr_prepare(maxd if maxd>0 else 1)
+    inv2 = (mod+1)//2
+    out = []
+    for h,w,k in cases:
+        d = h + w - 2
+        nsp = nCr(d, h-1, fact, invfact)
+        outside = (2*(h-1)%mod)*((w-1)%mod)%mod
+        if k < d:
+            out.append('0')
+        elif k == d:
+            out.append(str(nsp))
+        elif k == d+1:
+            ans = nsp * outside % mod
+            out.append(str(ans))
+        else:
+            c2 = outside * ((outside-1)%mod) % mod
+            c2 = c2 * inv2 % mod
+            pairs = (d-1)%mod * nCr(d-2, h-2, fact, invfact) % mod
+            ans = (nsp * c2 - pairs) % mod
+            out.append(str(ans))
+    sys.stdout.write("\n".join(out))
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
+
+

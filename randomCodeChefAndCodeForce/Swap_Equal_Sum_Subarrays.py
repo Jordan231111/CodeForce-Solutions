@@ -66,56 +66,37 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-def nCr_prepare(n):
-    fact = [1]*(n+1)
-    for i in range(1,n+1):
-        fact[i] = fact[i-1]*i%mod
-    invfact = [1]*(n+1)
-    invfact[n] = pow(fact[n], mod-2, mod)
-    for i in range(n,0,-1):
-        invfact[i-1] = invfact[i]*i%mod
-    return fact, invfact
+import os, io
 
-def nCr(n,k,fact,invfact):
-    if k<0 or k>n or n<0:
-        return 0
-    return fact[n]*invfact[k]%mod*invfact[n-k]%mod
-
-def main():
-    data = list(map(int, sys.stdin.buffer.read().split()))
+def solve():
+    data = io.BytesIO(os.read(0, os.fstat(0).st_size)).read().split()
     it = iter(data)
-    t = next(it)
-    cases = []
-    maxd = 0
+    t = int(next(it))
+    out_lines = []
     for _ in range(t):
-        h = next(it); w = next(it); k = next(it)
-        cases.append((h,w,k))
-        d = h + w - 2
-        if d > maxd:
-            maxd = d
-    fact, invfact = nCr_prepare(maxd if maxd>0 else 1)
-    inv2 = (mod+1)//2
-    out = []
-    for h,w,k in cases:
-        d = h + w - 2
-        nsp = nCr(d, h-1, fact, invfact)
-        outside = (2*(h-1)%mod)*((w-1)%mod)%mod
-        if k < d:
-            out.append('0')
-        elif k == d:
-            out.append(str(nsp))
-        elif k == d+1:
-            ans = nsp * outside % mod
-            out.append(str(ans))
-        else:
-            c2 = outside * ((outside-1)%mod) % mod
-            c2 = c2 * inv2 % mod
-            pairs = (d-1)%mod * nCr(d-2, h-2, fact, invfact) % mod
-            ans = (nsp * c2 - pairs) % mod
-            out.append(str(ans))
-    sys.stdout.write("\n".join(out))
+        n = int(next(it))
+        a = [int(next(it)) for _ in range(n)]
+        b = [int(next(it)) for _ in range(n)]
+        sa = sum(a)
+        sb = sum(b)
+        if sa != sb:
+            out_lines.append("No")
+            continue
+        if sa == 0 or sa == n:
+            out_lines.append("Yes")
+            continue
+        if sa == 1:
+            ai = a.index(1)
+            bi = b.index(1)
+            if ai == 0 or ai == n-1:
+                out_lines.append("Yes" if bi == ai else "No")
+            else:
+                out_lines.append("Yes" if (bi != 0 and bi != n-1) else "No")
+            continue
+        out_lines.append("Yes")
+    sys.stdout.write("\n".join(out_lines))
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    solve()
 
 
