@@ -55,6 +55,10 @@ DIR_8 = [[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1]]
 DIR_BISHOP = [[-1,1],[1,1],[1,-1],[-1,-1]]
 prime60 = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59]
 sys.set_int_max_str_digits(0)
+# sys.setrecursionlimit(10**6)
+# import pypyjit
+# pypyjit.set_param('max_unroll_recursion=-1')
+
 from collections import defaultdict,deque
 from heapq import heappop,heappush
 from bisect import bisect_left,bisect_right
@@ -63,30 +67,89 @@ BSL = bisect_left
 BSR = bisect_right
 
 def solve():
-    data = sys.stdin.buffer.read().split()
-    t = int(data[0]); p = 1
+    t = II()
     out = []
     for _ in range(t):
-        n = int(data[p]); p += 1
-        a = list(map(int, data[p:p+n])); p += n
-        b = list(map(int, data[p:p+n])); p += n
-
-        # Necessary condition: last element never changes
-        ok = (a[-1] == b[-1])
-
-
-        if ok:
-            for i in range(n-2, -1, -1):
-                ai = a[i]
-                bi = b[i]
-                if bi == ai or bi == (ai ^ a[i+1]) or bi == (ai ^ b[i+1]):
-                    continue
+        n,k = MI()
+        B = LI()
+        if n==0:
+            out.append("0")
+            continue
+        if B[0] != 1:
+            out.append("0")
+            continue
+        ok = True
+        for i in range(1,n):
+            if B[i] > B[i-1] + 1:
                 ok = False
                 break
+        if not ok:
+            out.append("0")
+            continue
+        runs = []
+        i = 0
+        while i < n:
+            j = i + 1
+            while j < n and B[j] != 1:
+                j += 1
+            runs.append((i, j))
+            i = j
 
-        out.append("YES" if ok else "NO")
-    sys.stdout.write("\n".join(out))
+        sys.setrecursionlimit(10**6)
+
+        def segment_F(l, r):
+            m = r - l
+            children = [[] for _ in range(m)]
+            st = [0]
+            for idx in range(1, m):
+                d = B[l+idx]
+                while len(st) > d - 1:
+                    st.pop()
+                p = st[-1]
+                children[p].append(idx)
+                st.append(idx)
+
+            def dfs(u):
+                if not children[u]:
+                    F = [0] * (k + 1)
+                    for s in range(1, k + 1):
+                        F[s] = 1
+                    return F
+                H = [1] * (k + 1)
+                for v in children[u]:
+                    Fv = dfs(v)
+                    newH = [0] * (k + 1)
+                    accv = 0
+                    for s in range(1, k + 1):
+                        accv = (accv + H[s - 1] * Fv[s]) % mod
+                        newH[s] = accv
+                    H = newH
+                return H
+
+            return dfs(0)
+
+        dp = [0] * (k + 1)
+        first = True
+        for (l, r) in runs:
+            F = segment_F(l, r)
+            if first:
+                for s in range(1, k + 1):
+                    dp[s] = F[s]
+                first = False
+            else:
+                pref = 0
+                newdp = [0] * (k + 1)
+                for s in range(1, k + 1):
+                    pref = (pref + dp[s - 1]) % mod
+                    newdp[s] = (F[s] * pref) % mod
+                dp = newdp
+        ans = 0
+        for s in range(1, k + 1):
+            ans = (ans + dp[s]) % mod
+        out.append(str(ans))
+    print("\n".join(out))
 
 if __name__ == "__main__":
     solve()
+
 

@@ -55,6 +55,10 @@ DIR_8 = [[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1]]
 DIR_BISHOP = [[-1,1],[1,1],[1,-1],[-1,-1]]
 prime60 = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59]
 sys.set_int_max_str_digits(0)
+# sys.setrecursionlimit(10**6)
+# import pypyjit
+# pypyjit.set_param('max_unroll_recursion=-1')
+
 from collections import defaultdict,deque
 from heapq import heappop,heappush
 from bisect import bisect_left,bisect_right
@@ -62,31 +66,53 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-def solve():
-    data = sys.stdin.buffer.read().split()
-    t = int(data[0]); p = 1
-    out = []
+import os, io
+
+def solve_case(a:list[int]) -> list[int]:
+    n = len(a)
+    if n == 0:
+        return []
+    suf = [0]*n
+    m = 10**18
+    for i in range(n-1,-1,-1):
+        v = a[i]
+        if v < m:
+            m = v
+        suf[i] = m
+    ans = [0]*n
+    start = 0
+    cur = -10**18
+    for i in range(n-1):
+        v = a[i]
+        if v > cur:
+            cur = v
+        if cur <= suf[i+1]:
+            for k in range(start, i+1):
+                ans[k] = cur
+            start = i+1
+            cur = -10**18
+    if n:
+        if a[-1] > cur:
+            cur = a[-1]
+        for k in range(start, n):
+            ans[k] = cur
+    return ans
+
+def main():
+    data = io.BytesIO(os.read(0, os.fstat(0).st_size)).read().split()
+    if not data:
+        return
+    it = iter(data)
+    t = int(next(it))
+    out_lines = []
     for _ in range(t):
-        n = int(data[p]); p += 1
-        a = list(map(int, data[p:p+n])); p += n
-        b = list(map(int, data[p:p+n])); p += n
+        n = int(next(it))
+        a = [int(next(it)) for _ in range(n)]
+        res = solve_case(a)
+        out_lines.append(" ".join(map(str, res)))
+    sys.stdout.write("\n".join(out_lines))
 
-        # Necessary condition: last element never changes
-        ok = (a[-1] == b[-1])
+if __name__ == '__main__':
+    main()
 
-
-        if ok:
-            for i in range(n-2, -1, -1):
-                ai = a[i]
-                bi = b[i]
-                if bi == ai or bi == (ai ^ a[i+1]) or bi == (ai ^ b[i+1]):
-                    continue
-                ok = False
-                break
-
-        out.append("YES" if ok else "NO")
-    sys.stdout.write("\n".join(out))
-
-if __name__ == "__main__":
-    solve()
 

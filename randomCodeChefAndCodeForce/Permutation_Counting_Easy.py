@@ -55,6 +55,10 @@ DIR_8 = [[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1]]
 DIR_BISHOP = [[-1,1],[1,1],[1,-1],[-1,-1]]
 prime60 = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59]
 sys.set_int_max_str_digits(0)
+# sys.setrecursionlimit(10**6)
+# import pypyjit
+# pypyjit.set_param('max_unroll_recursion=-1')
+
 from collections import defaultdict,deque
 from heapq import heappop,heappush
 from bisect import bisect_left,bisect_right
@@ -62,30 +66,73 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
+def precompute_fact(max_n):
+    fact = [1]*(max_n+1)
+    invfact = [1]*(max_n+1)
+    for i in range(1, max_n+1):
+        fact[i] = fact[i-1]*i % mod
+    invfact[max_n] = pow(fact[max_n], mod-2, mod)
+    for i in range(max_n, 0, -1):
+        invfact[i-1] = invfact[i]*i % mod
+    return fact, invfact
+
+def comb(n, k, fact, invfact):
+    if k < 0 or k > n or n < 0:
+        return 0
+    return fact[n]*invfact[k]%mod*invfact[n-k]%mod
+
+def runs_count(total, runs, fact, invfact):
+    if runs == 0:
+        return 1 if total == 0 else 0
+    if runs < 0 or runs > total:
+        return 0
+    return comb(total-1, runs-1, fact, invfact)
+
 def solve():
-    data = sys.stdin.buffer.read().split()
-    t = int(data[0]); p = 1
-    out = []
+    t = II()
+    cases = []
+    maxN = 0
     for _ in range(t):
-        n = int(data[p]); p += 1
-        a = list(map(int, data[p:p+n])); p += n
-        b = list(map(int, data[p:p+n])); p += n
-
-        # Necessary condition: last element never changes
-        ok = (a[-1] == b[-1])
-
-
-        if ok:
-            for i in range(n-2, -1, -1):
-                ai = a[i]
-                bi = b[i]
-                if bi == ai or bi == (ai ^ a[i+1]) or bi == (ai ^ b[i+1]):
+        n,k = MI()
+        cases.append(n)
+        if n > maxN:
+            maxN = n
+    fact, invfact = precompute_fact(maxN+2)
+    out = []
+    for n in cases:
+        q, r = divmod(n, 3)
+        c0 = q
+        c1 = q + (1 if r >= 1 else 0)
+        c2 = q + (1 if r == 2 else 0)
+        L = c1 + c2
+        total = 0
+        if L > 0:
+            for runs in (c0-1, c0, c0+1):
+                if runs < 1 or runs > L:
                     continue
-                ok = False
-                break
-
-        out.append("YES" if ok else "NO")
-    sys.stdout.write("\n".join(out))
+                z = c0 - (runs - 1)
+                if z == 0:
+                    ways_zero = 1
+                elif z == 1:
+                    ways_zero = 2
+                elif z == 2:
+                    ways_zero = 1
+                else:
+                    continue
+                A_lo = 0 if runs <= c2 else runs - c2
+                A_hi = runs if runs <= c1 else c1
+                Nr = 0
+                for A in range(A_lo, A_hi+1):
+                    term = comb(runs, A, fact, invfact)
+                    term = term * runs_count(c1, A, fact, invfact) % mod
+                    term = term * runs_count(c2, runs - A, fact, invfact) % mod
+                    Nr = (Nr + term) % mod
+                total = (total + ways_zero * Nr) % mod
+        total = total * fact[c0] % mod
+        total = total * fact[c1] % mod
+        total = total * fact[c2] % mod
+        out.append(str(total))
+    print("\n".join(out))
 
 if __name__ == "__main__":
     solve()

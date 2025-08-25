@@ -1,4 +1,3 @@
-# input
 import sys
 input = sys.stdin.readline
 II = lambda : int(input())
@@ -55,6 +54,10 @@ DIR_8 = [[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1]]
 DIR_BISHOP = [[-1,1],[1,1],[1,-1],[-1,-1]]
 prime60 = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59]
 sys.set_int_max_str_digits(0)
+# sys.setrecursionlimit(10**6)
+# import pypyjit
+# pypyjit.set_param('max_unroll_recursion=-1')
+
 from collections import defaultdict,deque
 from heapq import heappop,heappush
 from bisect import bisect_left,bisect_right
@@ -62,31 +65,36 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
+def F0(m:int) -> int:
+    if m <= 0:
+        return 0
+    res = 0
+    while m:
+        b = m.bit_length() - 1
+        p = 1 << b
+        res += (b * p) // 2
+        res += p
+        m -= p
+    return res
+
+def F1(n:int) -> int:
+    if n <= 1:
+        return 0
+    b = n.bit_length() - 1
+    p = 1 << b
+    m = n - p
+    left = (b * p) // 2 - 1
+    return left + F0(m) + p + (1 if m == 0 else 0)
+
 def solve():
-    data = sys.stdin.buffer.read().split()
-    t = int(data[0]); p = 1
+    t = II()
     out = []
     for _ in range(t):
-        n = int(data[p]); p += 1
-        a = list(map(int, data[p:p+n])); p += n
-        b = list(map(int, data[p:p+n])); p += n
-
-        # Necessary condition: last element never changes
-        ok = (a[-1] == b[-1])
-
-
-        if ok:
-            for i in range(n-2, -1, -1):
-                ai = a[i]
-                bi = b[i]
-                if bi == ai or bi == (ai ^ a[i+1]) or bi == (ai ^ b[i+1]):
-                    continue
-                ok = False
-                break
-
-        out.append("YES" if ok else "NO")
-    sys.stdout.write("\n".join(out))
+        n = II()
+        out.append(str(F1(n)))
+    print("\n".join(out))
 
 if __name__ == "__main__":
     solve()
+
 
