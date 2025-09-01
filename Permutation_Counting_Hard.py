@@ -215,27 +215,34 @@ def solve_k_eq_2(n: int, k: int, fact: list[int], invfact: list[int]) -> int:
 
 
 def solve_k_eq_3(n: int, k: int, fact: list[int], invfact: list[int]) -> int:
-    # Generic method: one pair group (1,2), and special 0
+    # Dedicated combinatorial formula by runs of nonzero residues and zero insertion
     q, r = divmod(n, 3)
     c0 = q
     c1 = q + (1 if r >= 1 else 0)
     c2 = q + (1 if r >= 2 else 0)
-    polys = []
-    if c1 and c2:
-        polys.append(build_poly_pair_match(c1, c2))
-    if c0 >= 2:
-        polys.append(build_poly_special(c0, fact, invfact))
-    H = multiply_polys(polys, n) if polys else [1]
-    ans = 0
-    for m, hm in enumerate(H):
-        if m > n:
-            break
-        term = fact[n - m] * hm % MOD
-        if m & 1:
-            ans -= term
-        else:
-            ans += term
-    return ans % MOD
+    if c1 == 0 and c2 == 0:
+        return 0
+    seq = 0
+    s = c1 + c2 + 1  # zero slots
+    if c1 == 0 or c2 == 0:
+        # Only one nonzero type present
+        if c0 <= s:
+            seq = nCr(s, c0, fact, invfact)
+    else:
+        total = c1 + c2
+        for runs in range(2, total + 1):
+            t = runs - 1
+            if c0 < t:
+                continue
+            a = (runs + 1) // 2
+            b = runs // 2
+            ways1 = nCr(c1 - 1, a - 1, fact, invfact) * nCr(c2 - 1, b - 1, fact, invfact) % MOD
+            ways2 = nCr(c2 - 1, a - 1, fact, invfact) * nCr(c1 - 1, b - 1, fact, invfact) % MOD
+            ways = (ways1 + ways2) % MOD
+            if ways == 0:
+                continue
+            seq = (seq + ways * nCr(s - t, c0 - t, fact, invfact)) % MOD
+    return seq * fact[c0] % MOD * fact[c1] % MOD * fact[c2] % MOD
 
 
 def solve_k_eq_4(n: int, k: int, fact: list[int], invfact: list[int]) -> int:
