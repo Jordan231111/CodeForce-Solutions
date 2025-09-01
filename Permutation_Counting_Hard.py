@@ -126,42 +126,34 @@ def multiply_polys(polys: list[list[int]], max_deg: int) -> list[int]:
     return stack[0][: max_deg + 1]
 
 
-def build_poly_pair(a: int, b: int) -> list[int]:
-    # F(t) = sum_{t=0..min(a,b)} 2^t * P(a,t) * P(b,t) / t!
-    m = min(a, b)
-    if m <= 0:
-        return [1]
-    inv = [0] * (m + 1)
-    for i in range(1, m + 1):
-        inv[i] = mod_pow(i, MOD - 2)
+def build_poly_pair_general(a: int, b: int, inv: list[int]) -> list[int]:
+    # F(t) = sum_{t=0..min(a,b)} 2^t * C(a,t) * C(b,t) * t!
+    #      = sum 2^t * P(a,t) * P(b,t) / t!
+    m = a if a < b else b
     f = [0] * (m + 1)
     f[0] = 1
     cur = 1
-    aa = a
-    bb = b
     for t in range(1, m + 1):
-        # cur *= 2 * (a - (t-1)) * (b - (t-1)) / t
         cur = cur * 2 % MOD
-        cur = cur * (aa - (t - 1)) % MOD
-        cur = cur * (bb - (t - 1)) % MOD
+        cur = cur * (a - (t - 1)) % MOD
+        cur = cur * (b - (t - 1)) % MOD
         cur = cur * inv[t] % MOD
         f[t] = cur
     return f
 
 
-def build_poly_special(d: int) -> list[int]:
-    # G(u) = sum_{u=0..floor(d/2)} P(d, 2u) / u!
+def build_poly_special_match(d: int) -> list[int]:
+    # G(u) = sum_{u=0..floor(d/2)} C(d, 2u) * (2u)! / u!
     m = d // 2
-    if m <= 0:
-        return [1]
+    g = [0] * (m + 1)
+    g[0] = 1
+    if m == 0:
+        return g
     inv = [0] * (m + 1)
     for i in range(1, m + 1):
         inv[i] = mod_pow(i, MOD - 2)
-    g = [0] * (m + 1)
-    g[0] = 1
     cur = 1
     for u in range(1, m + 1):
-        # cur *= (d - 2u + 2)(d - 2u + 1) / u
         x = d - 2 * (u - 1)
         y = x - 1
         cur = cur * x % MOD
@@ -171,51 +163,149 @@ def build_poly_special(d: int) -> list[int]:
     return g
 
 
-def solve_case(N: int, K: int, fact: list[int]) -> int:
-    # Build residue counts
-    q, r = divmod(N, K)
-    # c0 = q
-    polys: list[list[int]] = []
+def build_poly_pair_match(a: int, b: int) -> list[int]:
+    # F(t) = sum 2^t * C(a,t) * C(b,t) * t! = sum 2^t * P(a,t) * P(b,t) / t!
+    m = a if a < b else b
+    f = [0] * (m + 1)
+    f[0] = 1
+    if m == 0:
+        return f
+    inv = [0] * (m + 1)
+    for i in range(1, m + 1):
+        inv[i] = mod_pow(i, MOD - 2)
+    cur = 1
+    for t in range(1, m + 1):
+        cur = cur * 2 % MOD
+        cur = cur * (a - (t - 1)) % MOD
+        cur = cur * (b - (t - 1)) % MOD
+        cur = cur * inv[t] % MOD
+        f[t] = cur
+    return f
 
-    # Pair groups (r, K-r) for r=1..floor((K-1)/2)
-    limit = (K - 1) // 2
-    for x in range(1, limit + 1):
-        a = q + (1 if x <= r else 0)
-        b = q + (1 if (K - x) <= r else 0)
-        if a > 0 and b > 0:
-            polys.append(build_poly_pair(a, b))
-        # else polynomial is [1], skip
 
-    # Special residue 0
-    d0 = q
-    if d0 >= 2:
-        polys.append(build_poly_special(d0))
+def nCr(n: int, r: int, fact: list[int], invfact: list[int]) -> int:
+    if r < 0 or r > n:
+        return 0
+    return fact[n] * invfact[r] % MOD * invfact[n - r] % MOD
 
-    # Special K/2 if even
-    if K % 2 == 0:
-        half = K // 2
-        d1 = q + (1 if half <= r else 0)
-        if d1 >= 2:
-            polys.append(build_poly_special(d1))
 
-    max_m = N // 2
-    H = multiply_polys(polys, max_m)
-    # Ensure H has length at least 1
-    if not H:
-        H = [1]
+# Removed complex EGF method; use simple disjoint pair selection polynomials
 
-    # Compute S = sum_{m=0..len(H)-1} (-1)^m * (N - m)! * H[m]
+
+def solve_k_eq_2(n: int, k: int, fact: list[int], invfact: list[int]) -> int:
+    # Use generic polynomial method with specials only
+    c0 = n // 2
+    c1 = n - c0
+    polys = []
+    if c0 >= 2:
+        polys.append(build_poly_special_match(c0))
+    if c1 >= 2:
+        polys.append(build_poly_special_match(c1))
+    H = multiply_polys(polys, n) if polys else [1]
     ans = 0
     for m, hm in enumerate(H):
-        term = fact[N - m] * hm % MOD
-        if m % 2 == 1:
+        if m > n:
+            break
+        term = fact[n - m] * hm % MOD
+        if m & 1:
             ans -= term
         else:
             ans += term
-    ans %= MOD
-    if ans < 0:
-        ans += MOD
-    return ans
+    return ans % MOD
+
+
+def solve_k_eq_3(n: int, k: int, fact: list[int], invfact: list[int]) -> int:
+    # Generic method: one pair group (1,2), and special 0
+    q, r = divmod(n, 3)
+    c0 = q
+    c1 = q + (1 if r >= 1 else 0)
+    c2 = q + (1 if r >= 2 else 0)
+    polys = []
+    if c1 and c2:
+        polys.append(build_poly_pair_match(c1, c2))
+    if c0 >= 2:
+        polys.append(build_poly_special(c0, fact, invfact))
+    H = multiply_polys(polys, n) if polys else [1]
+    ans = 0
+    for m, hm in enumerate(H):
+        if m > n:
+            break
+        term = fact[n - m] * hm % MOD
+        if m & 1:
+            ans -= term
+        else:
+            ans += term
+    return ans % MOD
+
+
+def solve_k_eq_4(n: int, k: int, fact: list[int], invfact: list[int]) -> int:
+    # Generic method: pair group (1,3), specials 0 and 2
+    q, r = divmod(n, 4)
+    c0 = q
+    c1 = q + (1 if r >= 1 else 0)
+    c2 = q + (1 if r >= 2 else 0)
+    c3 = q + (1 if r >= 3 else 0)
+    polys = []
+    if c1 and c3:
+        polys.append(build_poly_pair_match(c1, c3))
+    if c0 >= 2:
+        polys.append(build_poly_special(c0, fact, invfact))
+    if c2 >= 2:
+        polys.append(build_poly_special(c2, fact, invfact))
+    H = multiply_polys(polys, n) if polys else [1]
+    ans = 0
+    for m, hm in enumerate(H):
+        if m > n:
+            break
+        term = fact[n - m] * hm % MOD
+        if m & 1:
+            ans -= term
+        else:
+            ans += term
+    return ans % MOD
+
+
+def solve_case(N: int, K: int, fact: list[int], invfact: list[int]) -> int:
+    if K == 2:
+        return solve_k_eq_2(N, K, fact, invfact)
+    if K == 3:
+        return solve_k_eq_3(N, K, fact, invfact)
+    if K == 4:
+        return solve_k_eq_4(N, K, fact, invfact)
+
+    # General method for any K
+    q, r = divmod(N, K)
+    counts = [q] * K
+    for i in range(1, r + 1):
+        counts[i] += 1
+
+    polys: list[list[int]] = []
+    # Pair groups
+    limit = (K - 1) // 2
+    for x in range(1, limit + 1):
+        a = counts[x]
+        b = counts[K - x]
+        if a and b:
+            polys.append(build_poly_pair_match(a, b))
+    # Specials
+    if counts[0] >= 2:
+        polys.append(build_poly_special_match(counts[0]))
+    if K % 2 == 0 and counts[K // 2] >= 2:
+        polys.append(build_poly_special_match(counts[K // 2]))
+
+    max_m = min(N, sum((len(p) - 1) for p in polys))
+    H = multiply_polys(polys, max_m) if polys else [1]
+
+    ans = 0
+    for m, hm in enumerate(H):
+        if m > N:
+            break
+        term = fact[N - m] * hm % MOD
+        if m & 1:
+            ans -= term
+        else:
+            ans += term
+    return ans % MOD
 
 
 def main():
@@ -233,12 +323,16 @@ def main():
             maxN = N
     # Precompute factorials up to maxN
     fact = [1] * (maxN + 1)
+    invfact = [1] * (maxN + 1)
     for i in range(2, maxN + 1):
         fact[i] = fact[i - 1] * i % MOD
+    invfact[maxN] = mod_pow(fact[maxN], MOD - 2)
+    for i in range(maxN, 0, -1):
+        invfact[i - 1] = invfact[i] * i % MOD
 
     out_lines = []
     for N, K in cases:
-        out_lines.append(str(solve_case(N, K, fact)))
+        out_lines.append(str(solve_case(N, K, fact, invfact)))
     sys.stdout.write("\n".join(out_lines))
 
 
