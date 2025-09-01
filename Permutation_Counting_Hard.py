@@ -256,9 +256,9 @@ def solve_k_eq_4(n: int, k: int, fact: list[int], invfact: list[int]) -> int:
     if c1 and c3:
         polys.append(build_poly_pair_match(c1, c3))
     if c0 >= 2:
-        polys.append(build_poly_special(c0, fact, invfact))
+        polys.append(build_poly_special_match(c0))
     if c2 >= 2:
-        polys.append(build_poly_special(c2, fact, invfact))
+        polys.append(build_poly_special_match(c2))
     H = multiply_polys(polys, n) if polys else [1]
     ans = 0
     for m, hm in enumerate(H):
