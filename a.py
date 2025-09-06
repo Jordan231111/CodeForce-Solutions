@@ -66,14 +66,13 @@ DD = defaultdict
 BSL = bisect_left
 BSR = bisect_right
 
-#split d into two lists split the 4 digit into 1 digit and 4 items in list
 
-n = input().rstrip()
-d = [int(x) for x in n.zfill(4)]
-n2 = input().rstrip()
-d2 = [int(x) for x in n2.zfill(4)]
-
-# print(d)
-# print(d2)
-#print whatever is greater
-print(max(d)-min(d2) if max(d)-min(d2) > max(d2)-min(d) else max(d2)-min(d))
+t1 = SI()
+t2 = SI()
+h1, m1 = map(int, t1.split(":"))
+h2, m2 = map(int, t2.split(":"))
+start = h1 * 60 + m1
+end = h2 * 60 + m2
+if end < start:
+    end += 24 * 60
+print(end - start)
