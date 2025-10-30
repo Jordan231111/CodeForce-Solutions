@@ -1,0 +1,3 @@
+When brute-force experiments reveal consistent properties (e.g., residue monotonicity, single-orientation per residue), formalize them right away as lemmas and write down their implications; that speeds up the transition from observation to formul
+
+Spend more time translating structural observations into explicit inequalities or combinatorial formulas instead of circling them. Once monotonicity or residue behavior is spotted, immediately try to count “free slots” versus “forced ones” and see if a direct binomial expression emerges.
